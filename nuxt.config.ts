@@ -37,6 +37,10 @@ export default defineNuxtConfig({
 
   // Nitro server configuration
   nitro: {
+    // Enable experimental WebSocket support for HA proxy
+    experimental: {
+      websocket: true,
+    },
     // Externalize Prisma - it can't be bundled
     externals: {
       external: ['@prisma/client'],
