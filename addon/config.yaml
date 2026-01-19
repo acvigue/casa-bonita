@@ -1,0 +1,31 @@
+name: Casa Bonita
+version: "1.0.0"
+slug: casa-bonita
+description: A custom Home Assistant dashboard
+url: "https://github.com/acvigue/casa-bonita"
+arch:
+  - amd64
+  - aarch64
+image: "ghcr.io/acvigue/casa-bonita:main"
+init: false
+
+# Ingress configuration
+ingress: true
+ingress_port: 3000
+ingress_entry: /
+panel_icon: "mdi:home-assistant"
+panel_title: "Casa Bonita"
+panel_admin: false
+
+# Data persistence
+map:
+  - data:rw
+
+# Options
+options:
+  debug_mode: false
+schema:
+  debug_mode: bool
+
+auth_api: true
+homeassistant_api: true

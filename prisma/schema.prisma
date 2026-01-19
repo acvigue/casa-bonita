@@ -1,0 +1,201 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==============================
+// System Models
+// ==============================
+
+// Cache of Home Assistant entity states
+model Entity {
+  id          String   @id // entity_id from Home Assistant
+  state       String
+  attributes  String   @default("{}")
+  lastChanged DateTime
+  lastUpdated DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  roomEntities RoomEntity[]
+}
+
+// Local automation definitions
+model Automation {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  triggers    String   @default("{}")
+  conditions  String?
+  actions     String   @default("{}")
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// System-wide preferences and settings
+model SystemPreference {
+  key       String   @id
+  value     String   @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==============================
+// User Models
+// ==============================
+
+model User {
+  id          String   @id // Home Assistant user ID
+  displayName String
+  isAdmin     Boolean  @default(false)
+  firstSeen   DateTime @default(now())
+  lastActive  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  configuration UserConfiguration?
+  rooms         Room[]
+  preferences   UserPreference[]
+}
+
+model UserConfiguration {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Home screen layout (stored as JSON string)
+  homeScreenConfig String @default("{}")
+
+  // Theme preferences
+  theme       String  @default("system") // "light", "dark", "system"
+  accentColor String?
+
+  // UI preferences
+  compactMode   Boolean @default(false)
+  showEntityIds Boolean @default(false)
+  defaultView   String  @default("home") // "home", "rooms", "entities"
+
+  // Sync settings
+  autoSync         Boolean @default(true)
+  syncFromTemplate String? // Template ID to sync from
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Room {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  icon      String  @default("mdi:home")
+  color     String?
+  sortOrder Int     @default(0)
+
+  // Layout configuration (stored as JSON string)
+  layout String @default("{}")
+
+  // Relations
+  entities RoomEntity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model RoomEntity {
+  id       String @id @default(cuid())
+  roomId   String
+  room     Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  entityId String
+  entity   Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  // Entity display configuration
+  displayName String? // Override entity name
+  icon        String? // Override entity icon
+  hidden      Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  // Widget configuration (stored as JSON string)
+  widgetType   String @default("default") // "default", "slider", "toggle", "climate", etc.
+  widgetConfig String @default("{}")
+
+  // Grid position
+  gridX      Int @default(0)
+  gridY      Int @default(0)
+  gridWidth  Int @default(1)
+  gridHeight Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, entityId])
+  @@index([roomId])
+  @@index([entityId])
+}
+
+model UserPreference {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  key   String
+  value String @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, key])
+  @@index([userId])
+}
+
+// ==============================
+// Template System (Admin)
+// ==============================
+
+model ConfigurationTemplate {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isDefault   Boolean @default(false) // Applied to new users
+
+  // Template data (stored as JSON strings)
+  homeScreenConfig String  @default("{}")
+  theme            String  @default("system")
+  accentColor      String?
+  compactMode      Boolean @default(false)
+
+  // Room templates
+  roomTemplates RoomTemplate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RoomTemplate {
+  id         String                @id @default(cuid())
+  templateId String
+  template   ConfigurationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  name      String
+  icon      String @default("mdi:home")
+  color     String?
+  sortOrder Int    @default(0)
+  layout    String @default("{}")
+
+  // Entity patterns (entity_id patterns to auto-include, stored as JSON string)
+  entityPatterns String @default("[]") // ["sensor.*_temperature", "light.*"]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([templateId])
+}

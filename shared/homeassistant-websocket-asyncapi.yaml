@@ -1,0 +1,1012 @@
+asyncapi: 3.0.0
+info:
+  title: Home Assistant WebSocket API
+  version: '2025.1'
+  description: |
+    Home Assistant hosts a WebSocket API at `/api/websocket`. This API can be used 
+    to stream information from a Home Assistant instance to any client that implements WebSockets.
+    
+    ## Connection Flow
+    1. Client connects to WebSocket endpoint
+    2. Server sends `auth_required` message
+    3. Client sends `auth` message with access token
+    4. Server responds with `auth_ok` (success) or `auth_invalid` (failure)
+    5. Optional: Client sends `supported_features` message
+    6. Command phase: Client sends commands, server responds with results
+    
+    ## Message Format
+    All messages are JSON objects with a `type` field. After authentication, 
+    messages must include an `id` field for correlation.
+  contact:
+    name: Home Assistant
+    url: https://www.home-assistant.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  local:
+    host: localhost:8123
+    pathname: /api/websocket
+    protocol: ws
+    description: Local Home Assistant WebSocket endpoint
+  custom:
+    host: '{host}:{port}'
+    pathname: /api/websocket
+    protocol: ws
+    description: Custom Home Assistant instance
+    variables:
+      host:
+        description: Home Assistant host IP or hostname
+        default: localhost
+      port:
+        description: Home Assistant port
+        default: '8123'
+
+defaultContentType: application/json
+
+channels:
+  websocket:
+    address: /api/websocket
+    messages:
+      # Authentication Messages
+      authRequired:
+        $ref: '#/components/messages/AuthRequired'
+      auth:
+        $ref: '#/components/messages/Auth'
+      authOk:
+        $ref: '#/components/messages/AuthOk'
+      authInvalid:
+        $ref: '#/components/messages/AuthInvalid'
+      
+      # Feature Enablement
+      supportedFeatures:
+        $ref: '#/components/messages/SupportedFeatures'
+      
+      # Command Messages
+      subscribeEvents:
+        $ref: '#/components/messages/SubscribeEvents'
+      subscribeTrigger:
+        $ref: '#/components/messages/SubscribeTrigger'
+      unsubscribeEvents:
+        $ref: '#/components/messages/UnsubscribeEvents'
+      fireEvent:
+        $ref: '#/components/messages/FireEvent'
+      callService:
+        $ref: '#/components/messages/CallService'
+      getStates:
+        $ref: '#/components/messages/GetStates'
+      getConfig:
+        $ref: '#/components/messages/GetConfig'
+      getServices:
+        $ref: '#/components/messages/GetServices'
+      getPanels:
+        $ref: '#/components/messages/GetPanels'
+      ping:
+        $ref: '#/components/messages/Ping'
+      validateConfig:
+        $ref: '#/components/messages/ValidateConfig'
+      extractFromTarget:
+        $ref: '#/components/messages/ExtractFromTarget'
+      
+      # Response Messages
+      result:
+        $ref: '#/components/messages/Result'
+      event:
+        $ref: '#/components/messages/Event'
+      pong:
+        $ref: '#/components/messages/Pong'
+
+operations:
+  # Server to Client Operations
+  receiveAuthRequired:
+    action: receive
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Server requests authentication
+    description: Sent by server immediately after client connects
+    messages:
+      - $ref: '#/channels/websocket/messages/authRequired'
+
+  receiveAuthOk:
+    action: receive
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Authentication successful
+    messages:
+      - $ref: '#/channels/websocket/messages/authOk'
+
+  receiveAuthInvalid:
+    action: receive
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Authentication failed
+    messages:
+      - $ref: '#/channels/websocket/messages/authInvalid'
+
+  receiveResult:
+    action: receive
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Command result from server
+    description: Response to any command sent by client
+    messages:
+      - $ref: '#/channels/websocket/messages/result'
+
+  receiveEvent:
+    action: receive
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Event notification
+    description: Sent when subscribed events or triggers fire
+    messages:
+      - $ref: '#/channels/websocket/messages/event'
+
+  receivePong:
+    action: receive
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Heartbeat response
+    messages:
+      - $ref: '#/channels/websocket/messages/pong'
+
+  # Client to Server Operations
+  sendAuth:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Send authentication credentials
+    messages:
+      - $ref: '#/channels/websocket/messages/auth'
+
+  sendSupportedFeatures:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Enable optional features
+    description: Should be sent as first command (id=1) after authentication
+    messages:
+      - $ref: '#/channels/websocket/messages/supportedFeatures'
+
+  sendSubscribeEvents:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Subscribe to events
+    messages:
+      - $ref: '#/channels/websocket/messages/subscribeEvents'
+
+  sendSubscribeTrigger:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Subscribe to triggers
+    messages:
+      - $ref: '#/channels/websocket/messages/subscribeTrigger'
+
+  sendUnsubscribeEvents:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Unsubscribe from events
+    messages:
+      - $ref: '#/channels/websocket/messages/unsubscribeEvents'
+
+  sendFireEvent:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Fire an event
+    messages:
+      - $ref: '#/channels/websocket/messages/fireEvent'
+
+  sendCallService:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Call a service action
+    messages:
+      - $ref: '#/channels/websocket/messages/callService'
+
+  sendGetStates:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Fetch all states
+    messages:
+      - $ref: '#/channels/websocket/messages/getStates'
+
+  sendGetConfig:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Fetch configuration
+    messages:
+      - $ref: '#/channels/websocket/messages/getConfig'
+
+  sendGetServices:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Fetch service actions
+    messages:
+      - $ref: '#/channels/websocket/messages/getServices'
+
+  sendGetPanels:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Fetch registered panels
+    messages:
+      - $ref: '#/channels/websocket/messages/getPanels'
+
+  sendPing:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Heartbeat check
+    messages:
+      - $ref: '#/channels/websocket/messages/ping'
+
+  sendValidateConfig:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Validate automation config
+    messages:
+      - $ref: '#/channels/websocket/messages/validateConfig'
+
+  sendExtractFromTarget:
+    action: send
+    channel:
+      $ref: '#/channels/websocket'
+    summary: Extract entities from targets
+    messages:
+      - $ref: '#/channels/websocket/messages/extractFromTarget'
+
+components:
+  messages:
+    # Authentication Phase Messages
+    AuthRequired:
+      name: auth_required
+      title: Authentication Required
+      summary: Server requests client authentication
+      payload:
+        $ref: '#/components/schemas/AuthRequiredPayload'
+
+    Auth:
+      name: auth
+      title: Authentication
+      summary: Client provides access token
+      payload:
+        $ref: '#/components/schemas/AuthPayload'
+
+    AuthOk:
+      name: auth_ok
+      title: Authentication Successful
+      summary: Server confirms successful authentication
+      payload:
+        $ref: '#/components/schemas/AuthOkPayload'
+
+    AuthInvalid:
+      name: auth_invalid
+      title: Authentication Failed
+      summary: Server rejects authentication
+      payload:
+        $ref: '#/components/schemas/AuthInvalidPayload'
+
+    # Feature Enablement
+    SupportedFeatures:
+      name: supported_features
+      title: Supported Features
+      summary: Enable client features
+      payload:
+        $ref: '#/components/schemas/SupportedFeaturesPayload'
+
+    # Command Messages
+    SubscribeEvents:
+      name: subscribe_events
+      title: Subscribe to Events
+      summary: Subscribe to event bus
+      payload:
+        $ref: '#/components/schemas/SubscribeEventsPayload'
+
+    SubscribeTrigger:
+      name: subscribe_trigger
+      title: Subscribe to Trigger
+      summary: Subscribe to automation triggers
+      payload:
+        $ref: '#/components/schemas/SubscribeTriggerPayload'
+
+    UnsubscribeEvents:
+      name: unsubscribe_events
+      title: Unsubscribe from Events
+      summary: Remove event subscription
+      payload:
+        $ref: '#/components/schemas/UnsubscribeEventsPayload'
+
+    FireEvent:
+      name: fire_event
+      title: Fire Event
+      summary: Fire an event on the event bus
+      payload:
+        $ref: '#/components/schemas/FireEventPayload'
+
+    CallService:
+      name: call_service
+      title: Call Service
+      summary: Call a service action
+      payload:
+        $ref: '#/components/schemas/CallServicePayload'
+
+    GetStates:
+      name: get_states
+      title: Get States
+      summary: Fetch all entity states
+      payload:
+        $ref: '#/components/schemas/GetStatesPayload'
+
+    GetConfig:
+      name: get_config
+      title: Get Config
+      summary: Fetch current configuration
+      payload:
+        $ref: '#/components/schemas/GetConfigPayload'
+
+    GetServices:
+      name: get_services
+      title: Get Services
+      summary: Fetch available service actions
+      payload:
+        $ref: '#/components/schemas/GetServicesPayload'
+
+    GetPanels:
+      name: get_panels
+      title: Get Panels
+      summary: Fetch registered panels
+      payload:
+        $ref: '#/components/schemas/GetPanelsPayload'
+
+    Ping:
+      name: ping
+      title: Ping
+      summary: Heartbeat request
+      payload:
+        $ref: '#/components/schemas/PingPayload'
+
+    ValidateConfig:
+      name: validate_config
+      title: Validate Config
+      summary: Validate triggers, conditions, and actions
+      payload:
+        $ref: '#/components/schemas/ValidateConfigPayload'
+
+    ExtractFromTarget:
+      name: extract_from_target
+      title: Extract From Target
+      summary: Extract entities, devices, and areas from targets
+      payload:
+        $ref: '#/components/schemas/ExtractFromTargetPayload'
+
+    # Response Messages
+    Result:
+      name: result
+      title: Result
+      summary: Command result response
+      payload:
+        $ref: '#/components/schemas/ResultPayload'
+
+    Event:
+      name: event
+      title: Event
+      summary: Event notification
+      payload:
+        $ref: '#/components/schemas/EventPayload'
+
+    Pong:
+      name: pong
+      title: Pong
+      summary: Heartbeat response
+      payload:
+        $ref: '#/components/schemas/PongPayload'
+
+  schemas:
+    # Common Schemas
+    Context:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Context ID
+          examples:
+            - "326ef27d19415c60c492fe330945f954"
+        parent_id:
+          type: string
+          nullable: true
+        user_id:
+          type: string
+          nullable: true
+          examples:
+            - "31ddb597e03147118cf8d2f8fbea5553"
+
+    State:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          examples:
+            - "light.bed_light"
+        state:
+          type: string
+          examples:
+            - "on"
+        attributes:
+          type: object
+          additionalProperties: true
+        last_changed:
+          type: string
+          format: date-time
+        last_updated:
+          type: string
+          format: date-time
+        context:
+          $ref: '#/components/schemas/Context'
+
+    Target:
+      type: object
+      description: Service call target
+      properties:
+        entity_id:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        device_id:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        area_id:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        label_id:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+
+    # Authentication Payloads
+    AuthRequiredPayload:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          const: auth_required
+        ha_version:
+          type: string
+          description: Home Assistant version
+          examples:
+            - "2025.1.0"
+
+    AuthPayload:
+      type: object
+      required:
+        - type
+        - access_token
+      properties:
+        type:
+          type: string
+          const: auth
+        access_token:
+          type: string
+          description: Long-lived access token
+          examples:
+            - "ABCDEFGHIJKLMNOPQ"
+
+    AuthOkPayload:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          const: auth_ok
+        ha_version:
+          type: string
+          examples:
+            - "2025.1.0"
+
+    AuthInvalidPayload:
+      type: object
+      required:
+        - type
+        - message
+      properties:
+        type:
+          type: string
+          const: auth_invalid
+        message:
+          type: string
+          description: Error message
+          examples:
+            - "Invalid password"
+
+    # Feature Enablement Payloads
+    SupportedFeaturesPayload:
+      type: object
+      required:
+        - id
+        - type
+        - features
+      properties:
+        id:
+          type: integer
+          description: Message ID (should be 1 for first message)
+          examples:
+            - 1
+        type:
+          type: string
+          const: supported_features
+        features:
+          type: object
+          properties:
+            coalesce_messages:
+              type: integer
+              description: Enable message coalescing (set to 1)
+              examples:
+                - 1
+
+    # Command Payloads
+    SubscribeEventsPayload:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+          examples:
+            - 18
+        type:
+          type: string
+          const: subscribe_events
+        event_type:
+          type: string
+          description: Optional event type filter
+          examples:
+            - "state_changed"
+
+    SubscribeTriggerPayload:
+      type: object
+      required:
+        - id
+        - type
+        - trigger
+      properties:
+        id:
+          type: integer
+          examples:
+            - 2
+        type:
+          type: string
+          const: subscribe_trigger
+        trigger:
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items:
+                type: object
+                additionalProperties: true
+          description: Trigger configuration (same as automation triggers)
+          examples:
+            - platform: state
+              entity_id: binary_sensor.motion_occupancy
+              from: "off"
+              to: "on"
+
+    UnsubscribeEventsPayload:
+      type: object
+      required:
+        - id
+        - type
+        - subscription
+      properties:
+        id:
+          type: integer
+          examples:
+            - 19
+        type:
+          type: string
+          const: unsubscribe_events
+        subscription:
+          type: integer
+          description: ID of the original subscription command
+          examples:
+            - 18
+
+    FireEventPayload:
+      type: object
+      required:
+        - id
+        - type
+        - event_type
+      properties:
+        id:
+          type: integer
+          examples:
+            - 24
+        type:
+          type: string
+          const: fire_event
+        event_type:
+          type: string
+          examples:
+            - "mydomain_event"
+        event_data:
+          type: object
+          additionalProperties: true
+          examples:
+            - device_id: my-device-id
+              type: motion_detected
+
+    CallServicePayload:
+      type: object
+      required:
+        - id
+        - type
+        - domain
+        - service
+      properties:
+        id:
+          type: integer
+          examples:
+            - 24
+        type:
+          type: string
+          const: call_service
+        domain:
+          type: string
+          examples:
+            - "light"
+        service:
+          type: string
+          examples:
+            - "turn_on"
+        service_data:
+          type: object
+          additionalProperties: true
+          examples:
+            - color_name: beige
+              brightness: "101"
+        target:
+          $ref: '#/components/schemas/Target'
+        return_response:
+          type: boolean
+          description: Must be true for services that return response data
+
+    GetStatesPayload:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+          examples:
+            - 19
+        type:
+          type: string
+          const: get_states
+
+    GetConfigPayload:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+          examples:
+            - 19
+        type:
+          type: string
+          const: get_config
+
+    GetServicesPayload:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+          examples:
+            - 19
+        type:
+          type: string
+          const: get_services
+
+    GetPanelsPayload:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+          examples:
+            - 19
+        type:
+          type: string
+          const: get_panels
+
+    PingPayload:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+          examples:
+            - 19
+        type:
+          type: string
+          const: ping
+
+    ValidateConfigPayload:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+          examples:
+            - 19
+        type:
+          type: string
+          const: validate_config
+        trigger:
+          description: Trigger configuration to validate
+        condition:
+          description: Condition configuration to validate
+        action:
+          description: Action configuration to validate
+
+    ExtractFromTargetPayload:
+      type: object
+      required:
+        - id
+        - type
+        - target
+      properties:
+        id:
+          type: integer
+          examples:
+            - 19
+        type:
+          type: string
+          const: extract_from_target
+        target:
+          $ref: '#/components/schemas/Target'
+        expand_group:
+          type: boolean
+          description: Expand group entities to their members
+          default: false
+
+    # Response Payloads
+    ResultPayload:
+      type: object
+      required:
+        - id
+        - type
+        - success
+      properties:
+        id:
+          type: integer
+          description: Correlates to the command message ID
+        type:
+          type: string
+          const: result
+        success:
+          type: boolean
+        result:
+          description: Command result data (varies by command)
+        error:
+          $ref: '#/components/schemas/ErrorObject'
+
+    ErrorObject:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+          examples:
+            - "invalid_format"
+            - "service_validation_error"
+        message:
+          type: string
+          description: Human-readable error message
+        translation_key:
+          type: string
+          description: Translation key for localized errors
+        translation_domain:
+          type: string
+          description: Integration domain for translations
+        translation_placeholders:
+          type: object
+          additionalProperties:
+            type: string
+
+    EventPayload:
+      type: object
+      required:
+        - id
+        - type
+        - event
+      properties:
+        id:
+          type: integer
+          description: ID of the subscription command
+        type:
+          type: string
+          const: event
+        event:
+          type: object
+          properties:
+            data:
+              type: object
+              additionalProperties: true
+            event_type:
+              type: string
+              examples:
+                - "state_changed"
+            time_fired:
+              type: string
+              format: date-time
+            origin:
+              type: string
+              examples:
+                - "LOCAL"
+            context:
+              $ref: '#/components/schemas/Context'
+            variables:
+              type: object
+              description: Present for trigger events
+              additionalProperties: true
+
+    PongPayload:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          const: pong
+
+    # Result-specific schemas
+    ValidateConfigResult:
+      type: object
+      properties:
+        trigger:
+          type: object
+          properties:
+            valid:
+              type: boolean
+            error:
+              type: string
+              nullable: true
+        condition:
+          type: object
+          properties:
+            valid:
+              type: boolean
+            error:
+              type: string
+              nullable: true
+        action:
+          type: object
+          properties:
+            valid:
+              type: boolean
+            error:
+              type: string
+              nullable: true
+
+    ExtractFromTargetResult:
+      type: object
+      properties:
+        referenced_entities:
+          type: array
+          items:
+            type: string
+        referenced_devices:
+          type: array
+          items:
+            type: string
+        referenced_areas:
+          type: array
+          items:
+            type: string
+        missing_devices:
+          type: array
+          items:
+            type: string
+        missing_areas:
+          type: array
+          items:
+            type: string
+        missing_floors:
+          type: array
+          items:
+            type: string
+        missing_labels:
+          type: array
+          items:
+            type: string
+
+    ServiceCallResult:
+      type: object
+      properties:
+        context:
+          $ref: '#/components/schemas/Context'
+        response:
+          description: Service response data (null if service doesn't support responses)
+          nullable: true
+
+    StateChangedEventData:
+      type: object
+      description: Data payload for state_changed events
+      properties:
+        entity_id:
+          type: string
+        new_state:
+          $ref: '#/components/schemas/State'
+        old_state:
+          $ref: '#/components/schemas/State'
+
+    TriggerEventData:
+      type: object
+      description: Data payload for trigger events
+      properties:
+        variables:
+          type: object
+          properties:
+            trigger:
+              type: object
+              properties:
+                id:
+                  type: string
+                idx:
+                  type: string
+                platform:
+                  type: string
+                entity_id:
+                  type: string
+                from_state:
+                  $ref: '#/components/schemas/State'
+                to_state:
+                  $ref: '#/components/schemas/State'
+                for:
+                  type: string
+                  nullable: true
+                attribute:
+                  type: string
+                  nullable: true
+                description:
+                  type: string
+        context:
+          $ref: '#/components/schemas/Context'

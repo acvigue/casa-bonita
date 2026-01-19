@@ -1,0 +1,45 @@
+{
+  "name": "casa-bonita",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "gen:openapi": "openapi-typescript shared/homeassistant-rest-openapi.yaml -o shared/generated/homeassistant-rest.d.ts",
+    "gen:asyncapi": "node scripts/generate-asyncapi.mjs",
+    "gen:all": "pnpm gen:openapi && pnpm gen:asyncapi",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "docker:build": "docker build -t casa-bonita:latest .",
+    "docker:run": "docker run -p 3000:3000 -v casa-bonita-data:/persist casa-bonita:latest"
+  },
+  "dependencies": {
+    "@nuxt/a11y": "1.0.0-alpha.1",
+    "@nuxt/eslint": "1.12.1",
+    "@nuxt/fonts": "0.12.1",
+    "@nuxt/hints": "1.0.0-alpha.5",
+    "@nuxt/icon": "2.2.0",
+    "@prisma/client": "^7.2.0",
+    "better-sqlite3": "^12.6.2",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.39.2",
+    "jose": "^6.0.11",
+    "nuxt": "^4.2.2",
+    "openapi-fetch": "^0.15.0",
+    "vue": "^3.5.27",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@asyncapi/modelina": "^5.10.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "openapi-typescript": "^7.10.1",
+    "prisma": "^7.2.0",
+    "yaml": "^2.8.2"
+  },
+  "packageManager": "pnpm@11.0.0-dev.1005+sha512.91f84a392eea348ea4852a182912d2520273a4336f933b78cc44bc931eb999923c097e9433a9b355adc1f725725ea99082fc9f032a559df832632e764c92c798"
+}

@@ -1,0 +1,15 @@
+#!/command/with-contenv sh
+echo "[app] Starting Casa Bonita..."
+cd /app
+
+# Generate JWT secret on first run if not exists
+if [ ! -f /data/.jwt_secret ]; then
+  echo "[app] Generating JWT secret..."
+  head -c 64 /dev/urandom | base64 > /data/.jwt_secret
+  chmod 600 /data/.jwt_secret
+fi
+
+export JWT_SECRET=$(cat /data/.jwt_secret)
+export NODE_ENV=production
+
+exec s6-setuidgid node node output/server/index.mjs

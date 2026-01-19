@@ -1,0 +1,4 @@
+#!/command/with-contenv sh
+cd /app
+echo "[migrations] Running Prisma migrations..."
+exec s6-setuidgid node node node_modules/.bin/prisma migrate deploy

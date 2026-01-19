@@ -1,0 +1,4 @@
+configuration:
+  debug_mode:
+    name: Debug Mode
+    description: Enable debug logging for troubleshooting

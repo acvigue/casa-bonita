@@ -1,0 +1,1005 @@
+openapi: 3.1.0
+info:
+  title: Home Assistant REST API
+  description: |
+    Home Assistant provides a RESTful API on the same port as the web frontend (default port 8123).
+    The API accepts and returns only JSON encoded objects.
+    All API calls must be accompanied by the header `Authorization: Bearer TOKEN`.
+  version: '2025.1'
+  contact:
+    name: Home Assistant
+    url: https://www.home-assistant.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:8123/api
+    description: Local Home Assistant instance
+  - url: http://{host}:{port}/api
+    description: Custom Home Assistant instance
+    variables:
+      host:
+        default: localhost
+        description: Home Assistant host IP or hostname
+      port:
+        default: '8123'
+        description: Home Assistant port
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Long-Lived Access Token from Home Assistant profile page
+
+  schemas:
+    ApiMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          example: API running.
+
+    Config:
+      type: object
+      properties:
+        components:
+          type: array
+          items:
+            type: string
+          example: ["sensor.cpuspeed", "frontend", "api", "sun"]
+        config_dir:
+          type: string
+          example: /home/ha/.homeassistant
+        elevation:
+          type: number
+          example: 510
+        latitude:
+          type: number
+          example: 45.8781529
+        longitude:
+          type: number
+          example: 8.458853651
+        location_name:
+          type: string
+          example: Home
+        time_zone:
+          type: string
+          example: Europe/Zurich
+        unit_system:
+          type: object
+          properties:
+            length:
+              type: string
+              example: km
+            mass:
+              type: string
+              example: g
+            temperature:
+              type: string
+              example: °C
+            volume:
+              type: string
+              example: L
+        version:
+          type: string
+          example: "2025.1.0"
+        whitelist_external_dirs:
+          type: array
+          items:
+            type: string
+
+    Event:
+      type: object
+      properties:
+        event:
+          type: string
+          example: state_changed
+        listener_count:
+          type: integer
+          example: 5
+
+    Service:
+      type: object
+      properties:
+        domain:
+          type: string
+          example: light
+        services:
+          type: array
+          items:
+            type: string
+          example: ["turn_on", "turn_off", "toggle"]
+
+    Context:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 326ef27d19415c60c492fe330945f954
+        parent_id:
+          type: string
+          nullable: true
+        user_id:
+          type: string
+          nullable: true
+          example: 31ddb597e03147118cf8d2f8fbea5553
+
+    State:
+      type: object
+      required:
+        - entity_id
+        - state
+      properties:
+        entity_id:
+          type: string
+          example: sun.sun
+        state:
+          type: string
+          example: below_horizon
+        attributes:
+          type: object
+          additionalProperties: true
+          example:
+            friendly_name: Sun
+            next_rising: "2016-05-31T03:39:14+00:00"
+        last_changed:
+          type: string
+          format: date-time
+          example: "2016-05-30T21:43:29.204838+00:00"
+        last_updated:
+          type: string
+          format: date-time
+          example: "2016-05-30T21:50:30.529465+00:00"
+        context:
+          $ref: '#/components/schemas/Context'
+
+    StateInput:
+      type: object
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          example: "25"
+        attributes:
+          type: object
+          additionalProperties: true
+          example:
+            unit_of_measurement: °C
+
+    HistoryState:
+      type: object
+      properties:
+        entity_id:
+          type: string
+        state:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+        last_changed:
+          type: string
+          format: date-time
+        last_updated:
+          type: string
+          format: date-time
+
+    LogbookEntry:
+      type: object
+      properties:
+        context_user_id:
+          type: string
+          nullable: true
+        domain:
+          type: string
+          example: alarm_control_panel
+        entity_id:
+          type: string
+          example: alarm_control_panel.area_001
+        message:
+          type: string
+          example: changed to disarmed
+        name:
+          type: string
+          example: Security
+        when:
+          type: string
+          format: date-time
+
+    Calendar:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          example: calendar.holidays
+        name:
+          type: string
+          example: National Holidays
+
+    CalendarEvent:
+      type: object
+      properties:
+        summary:
+          type: string
+          example: Birthday Party
+        start:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+              description: For all-day events
+            dateTime:
+              type: string
+              format: date-time
+              description: For timed events
+        end:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+            dateTime:
+              type: string
+              format: date-time
+        description:
+          type: string
+        location:
+          type: string
+
+    EventData:
+      type: object
+      additionalProperties: true
+
+    ServiceData:
+      type: object
+      additionalProperties: true
+      example:
+        entity_id: light.kitchen
+
+    ServiceResponse:
+      type: object
+      properties:
+        changed_states:
+          type: array
+          items:
+            $ref: '#/components/schemas/State'
+        service_response:
+          type: object
+          additionalProperties: true
+
+    TemplateRequest:
+      type: object
+      required:
+        - template
+      properties:
+        template:
+          type: string
+          example: "Paulus is at {{ states('device_tracker.paulus') }}!"
+
+    ConfigCheckResult:
+      type: object
+      properties:
+        errors:
+          type: string
+          nullable: true
+        result:
+          type: string
+          enum: [valid, invalid]
+
+    IntentRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: SetTimer
+        data:
+          type: object
+          additionalProperties: true
+          example:
+            seconds: "30"
+
+    EventFiredResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Event download_file fired.
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+paths:
+  /:
+    get:
+      summary: API Status
+      description: Returns a message if the API is up and running
+      operationId: getApiStatus
+      tags:
+        - Core
+      responses:
+        '200':
+          description: API is running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /config:
+    get:
+      summary: Get Configuration
+      description: Returns the current Home Assistant configuration
+      operationId: getConfig
+      tags:
+        - Core
+      responses:
+        '200':
+          description: Current configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /components:
+    get:
+      summary: Get Components
+      description: Returns a list of currently loaded components
+      operationId: getComponents
+      tags:
+        - Core
+      responses:
+        '200':
+          description: List of loaded components
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events:
+    get:
+      summary: Get Events
+      description: Returns an array of event objects with event name and listener count
+      operationId: getEvents
+      tags:
+        - Events
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{event_type}:
+    post:
+      summary: Fire Event
+      description: Fires an event with the specified event_type
+      operationId: fireEvent
+      tags:
+        - Events
+      parameters:
+        - name: event_type
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The type of event to fire
+          example: my_custom_event
+      requestBody:
+        description: Optional event data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventData'
+      responses:
+        '200':
+          description: Event fired successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventFiredResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /services:
+    get:
+      summary: Get Services
+      description: Returns an array of service objects grouped by domain
+      operationId: getServices
+      tags:
+        - Services
+      responses:
+        '200':
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Service'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /services/{domain}/{service}:
+    post:
+      summary: Call Service
+      description: Calls a service within a specific domain
+      operationId: callService
+      tags:
+        - Services
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Service domain
+          example: light
+        - name: service
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Service name
+          example: turn_on
+        - name: return_response
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Include service response data if supported
+      requestBody:
+        description: Service data including target entities
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceData'
+      responses:
+        '200':
+          description: Service executed successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/State'
+                  - $ref: '#/components/schemas/ServiceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /states:
+    get:
+      summary: Get All States
+      description: Returns an array of state objects for all entities
+      operationId: getStates
+      tags:
+        - States
+      responses:
+        '200':
+          description: List of all entity states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/State'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /states/{entity_id}:
+    get:
+      summary: Get Entity State
+      description: Returns the state object for a specified entity
+      operationId: getState
+      tags:
+        - States
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID
+          example: sensor.kitchen_temperature
+      responses:
+        '200':
+          description: Entity state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      summary: Set Entity State
+      description: |
+        Updates or creates a state. This sets the representation within Home Assistant 
+        and will not communicate with the actual device. Returns 200 if entity existed, 
+        201 if new entity was created.
+      operationId: setState
+      tags:
+        - States
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID
+          example: sensor.kitchen_temperature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateInput'
+      responses:
+        '200':
+          description: State updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the resource
+        '201':
+          description: State created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the new resource
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      summary: Delete Entity State
+      description: Deletes an entity with the specified entity_id
+      operationId: deleteState
+      tags:
+        - States
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID to delete
+      responses:
+        '200':
+          description: Entity deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /history/period:
+    get:
+      summary: Get History (Default Period)
+      description: Returns state changes from the past day
+      operationId: getHistoryDefault
+      tags:
+        - History
+      parameters:
+        - name: filter_entity_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Comma-separated list of entity IDs to filter
+          example: sensor.temperature,sensor.humidity
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of period (URL encoded)
+        - name: minimal_response
+          in: query
+          schema:
+            type: boolean
+          description: Only return last_changed and state for intermediate states
+        - name: no_attributes
+          in: query
+          schema:
+            type: boolean
+          description: Skip returning attributes
+        - name: significant_changes_only
+          in: query
+          schema:
+            type: boolean
+          description: Only return significant state changes
+      responses:
+        '200':
+          description: History data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/HistoryState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /history/period/{timestamp}:
+    get:
+      summary: Get History (Custom Period)
+      description: Returns state changes starting from the specified timestamp
+      operationId: getHistory
+      tags:
+        - History
+      parameters:
+        - name: timestamp
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Start of period (YYYY-MM-DDThh:mm:ssTZD)
+          example: "2023-09-04T00:00:00+02:00"
+        - name: filter_entity_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Comma-separated list of entity IDs to filter
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of period (URL encoded)
+        - name: minimal_response
+          in: query
+          schema:
+            type: boolean
+          description: Only return last_changed and state for intermediate states
+        - name: no_attributes
+          in: query
+          schema:
+            type: boolean
+          description: Skip returning attributes
+        - name: significant_changes_only
+          in: query
+          schema:
+            type: boolean
+          description: Only return significant state changes
+      responses:
+        '200':
+          description: History data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/HistoryState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /logbook:
+    get:
+      summary: Get Logbook (Default Period)
+      description: Returns logbook entries from the past day
+      operationId: getLogbookDefault
+      tags:
+        - Logbook
+      parameters:
+        - name: entity
+          in: query
+          schema:
+            type: string
+          description: Filter to single entity
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of period (URL encoded)
+      responses:
+        '200':
+          description: Logbook entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LogbookEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /logbook/{timestamp}:
+    get:
+      summary: Get Logbook (Custom Period)
+      description: Returns logbook entries starting from the specified timestamp
+      operationId: getLogbook
+      tags:
+        - Logbook
+      parameters:
+        - name: timestamp
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Start of period
+        - name: entity
+          in: query
+          schema:
+            type: string
+          description: Filter to single entity
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of period (URL encoded)
+      responses:
+        '200':
+          description: Logbook entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LogbookEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /error_log:
+    get:
+      summary: Get Error Log
+      description: Retrieve all errors logged during the current session
+      operationId: getErrorLog
+      tags:
+        - Core
+      responses:
+        '200':
+          description: Error log as plaintext
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /camera_proxy/{entity_id}:
+    get:
+      summary: Get Camera Image
+      description: Returns the current image from the specified camera entity
+      operationId: getCameraProxy
+      tags:
+        - Camera
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Camera entity ID
+          example: camera.my_sample_camera
+        - name: time
+          in: query
+          schema:
+            type: integer
+          description: Timestamp to prevent caching
+      responses:
+        '200':
+          description: Camera image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /calendars:
+    get:
+      summary: Get Calendars
+      description: Returns the list of calendar entities
+      operationId: getCalendars
+      tags:
+        - Calendars
+      responses:
+        '200':
+          description: List of calendars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Calendar'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /calendars/{entity_id}:
+    get:
+      summary: Get Calendar Events
+      description: Returns calendar events between start and end times
+      operationId: getCalendarEvents
+      tags:
+        - Calendars
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Calendar entity ID
+          example: calendar.holidays
+        - name: start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Start time (exclusive)
+        - name: end
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: End time (exclusive)
+      responses:
+        '200':
+          description: Calendar events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CalendarEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /template:
+    post:
+      summary: Render Template
+      description: Render a Home Assistant Jinja2 template
+      operationId: renderTemplate
+      tags:
+        - Core
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateRequest'
+      responses:
+        '200':
+          description: Rendered template
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Paulus is at work!"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /config/core/check_config:
+    post:
+      summary: Check Configuration
+      description: Trigger a check of configuration.yaml (requires config integration)
+      operationId: checkConfig
+      tags:
+        - Core
+      responses:
+        '200':
+          description: Configuration check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigCheckResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /intent/handle:
+    post:
+      summary: Handle Intent
+      description: Handle an intent (requires intent integration in configuration.yaml)
+      operationId: handleIntent
+      tags:
+        - Intents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntentRequest'
+      responses:
+        '200':
+          description: Intent handled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+tags:
+  - name: Core
+    description: Core API endpoints
+  - name: States
+    description: Entity state management
+  - name: Events
+    description: Event management
+  - name: Services
+    description: Service/action calls
+  - name: History
+    description: Historical state data
+  - name: Logbook
+    description: Logbook entries
+  - name: Camera
+    description: Camera proxy
+  - name: Calendars
+    description: Calendar management
+  - name: Intents
+    description: Intent handling
